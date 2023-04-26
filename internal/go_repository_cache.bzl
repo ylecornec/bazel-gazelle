@@ -17,8 +17,10 @@ load("//internal:common.bzl", "executable_extension")
 # Change to trigger cache invalidation: 1
 
 def _go_repository_cache_impl(ctx):
-    if ctx.attr.go_sdk_name:
-        go_sdk_name = ctx.attr.go_sdk_name
+    if ctx.attr.go_sdk_label:
+        go_sdk_label = ctx.attr.go_sdk_label
+    elif ctx.attr.go_sdk_name:
+        go_sdk_label = Label("@" + ctx.attr.go_sdk_name + "//:ROOT")
     else:
         host_platform = _detect_host_platform(ctx)
         matches = [
@@ -32,8 +34,7 @@ def _go_repository_cache_impl(ctx):
             fail('gazelle could not find a Go SDK. Specify which one to use with gazelle_dependencies(go_sdk = "go_sdk").')
         if len(matches) == 1:
             go_sdk_name = matches[0]
-
-    go_sdk_label = Label("@" + go_sdk_name + "//:ROOT")
+            go_sdk_label = Label("@" + go_sdk_name + "//:ROOT")
 
     go_root = str(ctx.path(go_sdk_label).dirname)
     go_path = str(ctx.path("."))
@@ -72,6 +73,7 @@ go_repository_cache = repository_rule(
     _go_repository_cache_impl,
     attrs = {
         "go_sdk_name": attr.string(),
+        "go_sdk_label": attr.label(),
         "go_sdk_info": attr.string_dict(),
         "go_env": attr.string_dict(),
     },
